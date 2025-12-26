@@ -18,8 +18,12 @@ func (i item) FilterValue() string { return i.title }
 func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
+		switch msg.String() {
+		case "ctrl+c":
 			return m, tea.Quit
+		case "enter":
+			m.chosenCredential = m.passList.SelectedItem()
+			m.currentState = statePasswordDetail
 		}
 	case tea.WindowSizeMsg:
 		h, v := windowStyle.GetFrameSize()

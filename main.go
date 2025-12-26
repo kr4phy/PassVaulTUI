@@ -37,13 +37,14 @@ type (
 )
 
 type model struct {
-	vpWidth       int
-	vpHeight      int
-	currentState  int
-	passwordInput textinput.Model
-	masterPass    string
-	passList      list.Model
-	err           error
+	vpWidth          int
+	vpHeight         int
+	currentState     int
+	passwordInput    textinput.Model
+	masterPass       string
+	passList         list.Model
+	chosenCredential list.Item
+	err              error
 }
 
 func initialModel() model {
