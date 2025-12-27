@@ -8,17 +8,12 @@ import (
 )
 
 func UpdatePasswordDetail(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "esc":
-			m.currentState = statePasswordsList
-		case "enter":
-			m.masterPass = m.passwordInput.Value()
+		case "esc", "enter":
 			m.currentState = statePasswordsList
 		}
 
@@ -28,15 +23,20 @@ func UpdatePasswordDetail(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.passwordInput, cmd = m.passwordInput.Update(msg)
-	return m, cmd
+	return m, nil
 }
 
 func PasswordDetailView(m model) string {
+	var details string
+	if cred, ok := m.chosenCredential.(item); ok {
+		details = fmt.Sprintf("Title: %s\nID: %s\nPassword: %s", keywordStyle.Render(cred.title[7:]), keywordStyle.Render(cred.id[4:]), keywordStyle.Render(cred.password))
+	} else {
+		details = "No credential selected."
+	}
+
 	content := fmt.Sprintf(
-		"Please enter password.\n\n%s\n\n%s",
-		m.passwordInput.View(),
-		"(esc to quit)",
+		"Credential Details\n\n%s\n\n(esc to go back)",
+		details,
 	) + "\n"
 	h, v := windowStyle.GetFrameSize()
 	return lipgloss.Place(

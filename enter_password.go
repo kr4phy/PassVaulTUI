@@ -17,6 +17,11 @@ func UpdateEnterPassword(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			m.masterPass = m.passwordInput.Value()
+			_, err := LoadEncryptedData("data.bin", deriveKey(m.masterPass))
+			if err != nil {
+				m.err = err
+				return m, nil
+			}
 			m.currentState = statePasswordsList
 		}
 
@@ -31,8 +36,13 @@ func UpdateEnterPassword(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 }
 
 func EnterPasswordView(m model) string {
+	wrongPassMsg := ""
+	if m.err != nil {
+		wrongPassMsg = fmt.Sprintf("\n\n%s\n\n", m.err)
+	}
 	content := fmt.Sprintf(
-		"Please enter password.\n\n%s\n\n%s",
+		"Please enter password.%s\n\n%s\n\n%s",
+		wrongPassMsg,
 		m.passwordInput.View(),
 		"(esc to quit)",
 	) + "\n"
