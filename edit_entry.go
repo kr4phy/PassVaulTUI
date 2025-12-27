@@ -29,7 +29,7 @@ func setAddFocus(m *model, idx int) {
 	}
 }
 
-func UpdateAddEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func UpdateEditEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -37,6 +37,8 @@ func UpdateAddEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "esc":
 			// Return to list without saving
+			m.isEditing = false
+			m.editIndex = -1
 			m.currentState = statePasswordsList
 			setAddFocus(&m, 0)
 			return m, nil
@@ -47,7 +49,11 @@ func UpdateAddEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			}
 			// addFocus == 2 and enter -> save
 			newEntry := [3]string{m.addTitleInput.Value(), m.addIDInput.Value(), m.addPassInput.Value()}
-			m.passStorage = append(m.passStorage, newEntry)
+			if m.isEditing && m.editIndex >= 0 && m.editIndex < len(m.passStorage) {
+				m.passStorage[m.editIndex] = newEntry
+			} else {
+				m.passStorage = append(m.passStorage, newEntry)
+			}
 			if err := SaveToFile("data.bin", m.passStorage, deriveKey(m.masterPass)); err != nil {
 				m.err = err
 				return m, tea.Quit
@@ -57,11 +63,13 @@ func UpdateAddEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.addTitleInput.SetValue("")
 			m.addIDInput.SetValue("")
 			m.addPassInput.SetValue("")
+			m.isEditing = false
+			m.editIndex = -1
 			setAddFocus(&m, 0)
 			m.currentState = statePasswordsList
 			return m, nil
 		case "tab", "down":
-			if m.addFocus <2 {
+			if m.addFocus < 2 {
 				setAddFocus(&m, m.addFocus+1)
 				return m, nil
 			}
@@ -85,12 +93,37 @@ func UpdateAddEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func AddEntryView(m model) string {
+func EditEntryView(m model) string {
+	var (
+		addTitleInput string
+		addIDInput    string
+		addPassInput  string
+	)
+	if m.addTitleInput.Focused() {
+		addTitleInput = keywordStyle.Render(m.addTitleInput.View())
+	} else {
+		addTitleInput = m.addTitleInput.View()
+	}
+	if m.addIDInput.Focused() {
+		addIDInput = keywordStyle.Render(m.addIDInput.View())
+	} else {
+		addIDInput = m.addIDInput.View()
+	}
+	if m.addPassInput.Focused() {
+		addPassInput = keywordStyle.Render(m.addPassInput.View())
+	} else {
+		addPassInput = m.addPassInput.View()
+	}
+	label := "Add new entry"
+	if m.isEditing {
+		label = "Edit entry"
+	}
 	content := fmt.Sprintf(
-		"Add new entry\n\nTitle: %s\nID: %s\nPassword: %s\n\n(tab/down/enter to next, shift+tab/up back, enter to add item, esc to cancel)",
-		m.addTitleInput.View(),
-		m.addIDInput.View(),
-		m.addPassInput.View(),
+		"%s\n\nTitle %s\nID %s\nPassword %s\n\n(tab/down/enter to next, shift+tab/up back, enter to save, esc to cancel)",
+		label,
+		addTitleInput,
+		addIDInput,
+		addPassInput,
 	)
 	h, v := windowStyle.GetFrameSize()
 	return lipgloss.Place(
@@ -98,6 +131,6 @@ func AddEntryView(m model) string {
 		m.vpHeight-v,
 		lipgloss.Center,
 		lipgloss.Center,
-		content,
+		formWindowStyle.Render(content),
 	)
 }

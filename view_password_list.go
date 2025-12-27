@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -40,6 +41,12 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.passList.FilterState() == list.Filtering {
+			if msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			break
+		}
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
@@ -48,8 +55,22 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.addTitleInput.SetValue("")
 			m.addIDInput.SetValue("")
 			m.addPassInput.SetValue("")
+			m.isEditing = false
+			m.editIndex = -1
 			m.currentState = stateAddEntry
 			return m, nil
+		case "e":
+			idx := m.passList.Index()
+			if idx >= 0 && idx < len(m.passStorage) {
+				setAddFocus(&m, 0)
+				m.addTitleInput.SetValue(m.passStorage[idx][0])
+				m.addIDInput.SetValue(m.passStorage[idx][1])
+				m.addPassInput.SetValue(m.passStorage[idx][2])
+				m.isEditing = true
+				m.editIndex = idx
+				m.currentState = stateAddEntry
+				return m, nil
+			}
 		case "d", "backspace", "delete":
 			idx := m.passList.Index()
 			if idx >= 0 && idx < len(m.passStorage) {
@@ -64,6 +85,12 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "enter":
 			m.chosenCredential = m.passList.SelectedItem()
 			m.currentState = statePasswordDetail
+		case "s":
+			m.changePassInput.SetValue("")
+			m.changePassInput.Focus()
+			m.err = nil
+			m.currentState = stateChangeMaster
+			return m, nil
 		}
 	case tea.WindowSizeMsg:
 		h, v := passListStyle.GetFrameSize()
@@ -80,8 +107,8 @@ func PasswordListView(m model) string {
 	return lipgloss.Place(
 		m.vpWidth-h*2,
 		m.vpHeight-v*2,
+		lipgloss.Left,
 		lipgloss.Center,
-		lipgloss.Bottom,
 		content,
 	)
 }

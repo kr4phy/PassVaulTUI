@@ -20,8 +20,10 @@ func UpdateEnterPassword(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			_, err := LoadEncryptedData("data.bin", deriveKey(m.masterPass))
 			if err != nil {
 				m.err = err
+				m.passwordInput.SetValue("")
 				return m, nil
 			}
+			m.err = nil
 			m.currentState = statePasswordsList
 		}
 
@@ -43,7 +45,7 @@ func EnterPasswordView(m model) string {
 	content := fmt.Sprintf(
 		"Please enter password.%s\n\n%s\n\n%s",
 		wrongPassMsg,
-		m.passwordInput.View(),
+		keywordStyle.Render(m.passwordInput.View()),
 		"(esc to quit)",
 	) + "\n"
 	h, v := windowStyle.GetFrameSize()
@@ -52,6 +54,6 @@ func EnterPasswordView(m model) string {
 		m.vpHeight-v,
 		lipgloss.Center,
 		lipgloss.Center,
-		content,
+		formWindowStyle.Render(content),
 	)
 }

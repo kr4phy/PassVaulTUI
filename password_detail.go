@@ -35,8 +35,8 @@ func PasswordDetailView(m model) string {
 	}
 
 	content := fmt.Sprintf(
-		"Credential Details\n\n%s\n\n(esc to go back)",
-		details,
+		"Credential Details\n\n%s\n\n(esc/enter to go back)",
+		formWindowStyle.Render(details),
 	) + "\n"
 	h, v := windowStyle.GetFrameSize()
 	return lipgloss.Place(

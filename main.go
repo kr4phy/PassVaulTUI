@@ -20,14 +20,19 @@ const (
 	statePasswordsList  = 1
 	statePasswordDetail = 2
 	stateAddEntry       = 3
+	stateChangeMaster   = 4
 )
 
 var (
 	windowStyle = lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("62")).
-		Padding(0, 1) // 좌우 여백
-	keywordStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("62")).
+			Padding(0, 1) // 좌우 여백
+	formWindowStyle = lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("62")).
+			Padding(0, 1)
+	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
 )
 
 type tickMsg struct{}
@@ -58,10 +63,13 @@ type model struct {
 	masterPass       string
 	passStorage      [][3]string
 	passList         list.Model
+	isEditing        bool
+	editIndex        int
 	addTitleInput    textinput.Model
 	addIDInput       textinput.Model
 	addPassInput     textinput.Model
 	addFocus         int
+	changePassInput  textinput.Model
 	chosenCredential list.Item
 	Ticks            int
 	err              error
@@ -69,23 +77,20 @@ type model struct {
 
 func initialModel() model {
 	pInput := textinput.New()
-	pInput.Placeholder = "password"
+	pInput.Placeholder = "Enter master password"
 	pInput.Focus()
 	pInput.CharLimit = 156
-	pInput.Width = 20
+	pInput.Width = 24
+	pInput.EchoMode = textinput.EchoPassword
+	pInput.EchoCharacter = '*'
 	passList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	passList.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{
-			key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new entry")),
-			key.NewBinding(key.WithKeys("d", "backspace", "delete"), key.WithHelp("d/backspace/delete", "remove")),
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "open detail")),
-		}
-	}
 	passList.AdditionalFullHelpKeys = func() []key.Binding {
 		return []key.Binding{
 			key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new entry")),
+			key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit entry")),
 			key.NewBinding(key.WithKeys("d", "backspace", "delete"), key.WithHelp("d/backspace/delete", "remove")),
 			key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "open detail")),
+			key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "change master")),
 		}
 	}
 	var storeExists bool
@@ -108,6 +113,12 @@ func initialModel() model {
 	addPass.Width = 24
 	addPass.EchoMode = textinput.EchoPassword
 	addPass.EchoCharacter = '*'
+	changePass := textinput.New()
+	changePass.Placeholder = "new master password"
+	changePass.CharLimit = 156
+	changePass.Width = 24
+	changePass.EchoMode = textinput.EchoPassword
+	changePass.EchoCharacter = '*'
 	return model{
 		vpWidth:          0,
 		vpHeight:         0,
@@ -117,10 +128,13 @@ func initialModel() model {
 		masterPass:       "",
 		passStorage:      nil,
 		passList:         passList,
+		isEditing:        false,
+		editIndex:        -1,
 		addTitleInput:    addTitle,
 		addIDInput:       addID,
 		addPassInput:     addPass,
 		addFocus:         0,
+		changePassInput:  changePass,
 		chosenCredential: item{},
 		Ticks:            0,
 		err:              nil,
@@ -157,7 +171,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case statePasswordDetail:
 		return UpdatePasswordDetail(msg, m)
 	case stateAddEntry:
-		return UpdateAddEntry(msg, m)
+		return UpdateEditEntry(msg, m)
+	case stateChangeMaster:
+		return UpdateChangeMasterPass(msg, m)
 	default:
 		return UpdateEnterPassword(msg, m)
 	}
@@ -173,7 +189,9 @@ func (m model) View() string {
 	case statePasswordDetail:
 		content = PasswordDetailView(m)
 	case stateAddEntry:
-		content = AddEntryView(m)
+		content = EditEntryView(m)
+	case stateChangeMaster:
+		content = ChangeMasterPassView(m)
 	default:
 		content = EnterPasswordView(m)
 	}
