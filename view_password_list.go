@@ -91,6 +91,15 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.err = nil
 			m.currentState = stateChangeMaster
 			return m, nil
+		case "g":
+			setGeneratorFocus(&m, 0)
+			if m.genLengthInput.Value() == "" {
+				m.genLengthInput.SetValue("16")
+			}
+			m.generatedPass = ""
+			m.err = nil
+			m.currentState = statePasswordGenerator
+			return m, nil
 		}
 	case tea.WindowSizeMsg:
 		h, v := passListStyle.GetFrameSize()
@@ -102,11 +111,11 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 }
 
 func PasswordListView(m model) string {
-	h, v := passListStyle.GetFrameSize()
+	h, v := windowStyle.GetFrameSize()
 	content := passListStyle.Render(m.passList.View())
 	return lipgloss.Place(
-		m.vpWidth-h*2,
-		m.vpHeight-v*2,
+		m.vpWidth-h,
+		m.vpHeight-v,
 		lipgloss.Left,
 		lipgloss.Center,
 		content,

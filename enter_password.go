@@ -43,7 +43,7 @@ func EnterPasswordView(m model) string {
 		wrongPassMsg = fmt.Sprintf("\n\n%s\n\n", m.err)
 	}
 	content := fmt.Sprintf(
-		"Please enter password.%s\n\n%s\n\n%s",
+		"Please enter master password.%s\n\n%s\n\n%s",
 		wrongPassMsg,
 		keywordStyle.Render(m.passwordInput.View()),
 		"(esc to quit)",

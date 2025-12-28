@@ -120,7 +120,9 @@ func EditEntryView(m model) string {
 	}
 	content := fmt.Sprintf(
 		"%s\n\nTitle %s\nID %s\nPassword %s\n\n(tab/down/enter to next, shift+tab/up back, enter to save, esc to cancel)",
-		label,
+		titleStyle.
+			Width(m.vpWidth/2).
+			Render(label),
 		addTitleInput,
 		addIDInput,
 		addPassInput,

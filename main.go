@@ -16,23 +16,27 @@ import (
 )
 
 const (
-	stateEnterPassword  = 0
-	statePasswordsList  = 1
-	statePasswordDetail = 2
-	stateAddEntry       = 3
-	stateChangeMaster   = 4
+	stateEnterPassword     = 0
+	statePasswordsList     = 1
+	statePasswordDetail    = 2
+	stateAddEntry          = 3
+	stateChangeMaster      = 4
+	statePasswordGenerator = 5
 )
 
 var (
 	windowStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62")).
-			Padding(0, 1) // 좌우 여백
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1) // 좌우 여백
 	formWindowStyle = lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("62")).
-			Padding(0, 1)
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1)
+	titleStyle   = lipgloss.NewStyle().Bold(true).AlignHorizontal(lipgloss.Center)
 	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
+	subtleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	textStyle    = lipgloss.NewStyle()
 )
 
 type tickMsg struct{}
@@ -70,6 +74,12 @@ type model struct {
 	addPassInput     textinput.Model
 	addFocus         int
 	changePassInput  textinput.Model
+	genLengthInput   textinput.Model
+	genUseUpper      bool
+	genUseNumber     bool
+	genUseSpecial    bool
+	genFocus         int
+	generatedPass    string
 	chosenCredential list.Item
 	Ticks            int
 	err              error
@@ -91,6 +101,7 @@ func initialModel() model {
 			key.NewBinding(key.WithKeys("d", "backspace", "delete"), key.WithHelp("d/backspace/delete", "remove")),
 			key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "open detail")),
 			key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "change master")),
+			key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "generate password")),
 		}
 	}
 	var storeExists bool
@@ -114,11 +125,16 @@ func initialModel() model {
 	addPass.EchoMode = textinput.EchoPassword
 	addPass.EchoCharacter = '*'
 	changePass := textinput.New()
-	changePass.Placeholder = "new master password"
+	changePass.Placeholder = "Enter new master password"
 	changePass.CharLimit = 156
 	changePass.Width = 24
 	changePass.EchoMode = textinput.EchoPassword
 	changePass.EchoCharacter = '*'
+	genLength := textinput.New()
+	genLength.Placeholder = "length"
+	genLength.CharLimit = 4
+	genLength.Width = 6
+	genLength.SetValue("16")
 	return model{
 		vpWidth:          0,
 		vpHeight:         0,
@@ -135,6 +151,12 @@ func initialModel() model {
 		addPassInput:     addPass,
 		addFocus:         0,
 		changePassInput:  changePass,
+		genLengthInput:   genLength,
+		genUseUpper:      true,
+		genUseNumber:     true,
+		genUseSpecial:    true,
+		genFocus:         0,
+		generatedPass:    "",
 		chosenCredential: item{},
 		Ticks:            0,
 		err:              nil,
@@ -174,6 +196,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return UpdateEditEntry(msg, m)
 	case stateChangeMaster:
 		return UpdateChangeMasterPass(msg, m)
+	case statePasswordGenerator:
+		return UpdatePasswordGenerator(msg, m)
 	default:
 		return UpdateEnterPassword(msg, m)
 	}
@@ -192,6 +216,8 @@ func (m model) View() string {
 		content = EditEntryView(m)
 	case stateChangeMaster:
 		content = ChangeMasterPassView(m)
+	case statePasswordGenerator:
+		content = PasswordGeneratorView(m)
 	default:
 		content = EnterPasswordView(m)
 	}

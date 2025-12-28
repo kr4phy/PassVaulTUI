@@ -35,7 +35,10 @@ func PasswordDetailView(m model) string {
 	}
 
 	content := fmt.Sprintf(
-		"Credential Details\n\n%s\n\n(esc/enter to go back)",
+		"%s\n\n%s\n\n(esc/enter to go back)",
+		titleStyle.
+			Width(m.vpWidth/2).
+			Render("Credential Details"),
 		formWindowStyle.Render(details),
 	) + "\n"
 	h, v := windowStyle.GetFrameSize()
