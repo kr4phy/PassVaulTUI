@@ -24,6 +24,7 @@ func (i item) FilterValue() string { return i.title }
 func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	if m.passStorage == nil {
 		content, err := LoadEncryptedData(dataFilePath(), deriveKey(m.masterPass))
+
 		if err != nil {
 			switch {
 			case errors.Is(err, os.ErrNotExist):
@@ -41,6 +42,7 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.storeExists = true
 			m.passStorage = content
 		}
+
 		m.passList.SetItems(ConvertSliceToListItem(m.passStorage))
 	}
 
@@ -63,9 +65,11 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.isEditing = false
 			m.editIndex = -1
 			m.currentState = stateEditEntry
+
 			return m, nil
 		case "e":
 			idx := m.passList.Index()
+
 			if idx >= 0 && idx < len(m.passStorage) {
 				setEditFocus(&m, 0)
 				m.editTitleInput.SetValue(m.passStorage[idx][0])
@@ -74,18 +78,24 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.isEditing = true
 				m.editIndex = idx
 				m.currentState = stateEditEntry
+
 				return m, nil
 			}
+
 		case "d", "backspace", "delete":
 			idx := m.passList.Index()
+
 			if idx >= 0 && idx < len(m.passStorage) {
 				m.passStorage = append(m.passStorage[:idx], m.passStorage[idx+1:]...)
+
 				if err := SaveToFile(dataFilePath(), m.passStorage, deriveKey(m.masterPass)); err != nil {
 					m.err = err
 					return m, tea.Quit
 				}
+
 				m.passList.SetItems(ConvertSliceToListItem(m.passStorage))
 			}
+
 			return m, nil
 		case "enter":
 			m.chosenCredential = m.passList.SelectedItem()
@@ -95,15 +105,19 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.changePassInput.Focus()
 			m.err = nil
 			m.currentState = stateChangeMaster
+
 			return m, nil
 		case "g":
 			setGeneratorFocus(&m, 0)
+
 			if m.genLengthInput.Value() == "" {
 				m.genLengthInput.SetValue("16")
 			}
+
 			m.generatedPass = ""
 			m.err = nil
 			m.currentState = statePasswordGenerator
+
 			return m, nil
 		}
 	case tea.WindowSizeMsg:
@@ -112,12 +126,14 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	}
 	var cmd tea.Cmd
 	m.passList, cmd = m.passList.Update(msg)
+
 	return m, cmd
 }
 
 func PasswordListView(m model) string {
 	h, v := windowStyle.GetFrameSize()
 	content := passListStyle.Render(m.passList.View())
+
 	return lipgloss.Place(
 		m.vpWidth-h,
 		m.vpHeight-v,

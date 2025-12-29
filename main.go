@@ -14,6 +14,7 @@ import (
 
 type state int
 
+// Declare states
 const (
 	stateEnterPassword state = iota
 	statePasswordsList
@@ -26,6 +27,7 @@ const (
 type updateHandler func(tea.Msg, model) (tea.Model, tea.Cmd)
 type viewHandler func(model) string
 
+// Declare update handler dispatch map
 var updateDispatch = map[state]updateHandler{
 	stateEnterPassword:     UpdateEnterPassword,
 	statePasswordsList:     UpdatePasswordList,
@@ -35,6 +37,7 @@ var updateDispatch = map[state]updateHandler{
 	statePasswordGenerator: UpdatePasswordGenerator,
 }
 
+// Declare view handler dispatch map
 var viewDispatch = map[state]viewHandler{
 	stateEnterPassword:     EnterPasswordView,
 	statePasswordsList:     PasswordListView,
@@ -44,21 +47,23 @@ var viewDispatch = map[state]viewHandler{
 	statePasswordGenerator: PasswordGeneratorView,
 }
 
+// Styles used in views
 var (
 	windowStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("62")).
-		Padding(0, 1)
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("62")).
+			Padding(0, 1)
 	formWindowStyle = lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("62")).
-		Padding(0, 1)
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("62")).
+			Padding(0, 1)
 	titleStyle   = lipgloss.NewStyle().Bold(true).AlignHorizontal(lipgloss.Center)
 	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
 	subtleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	textStyle    = lipgloss.NewStyle()
 )
 
+// main function
 func main() {
 	p := tea.NewProgram(initialModel())
 
@@ -71,6 +76,7 @@ type (
 	errMsg error
 )
 
+// Model interface
 type model struct {
 	vpWidth          int
 	vpHeight         int
@@ -97,6 +103,7 @@ type model struct {
 	err              error
 }
 
+// Utility function for making text input form
 func makeTextInput(placeholder string, param ...int) textinput.Model {
 	inputForm := textinput.New()
 	inputForm.Placeholder = placeholder
@@ -118,6 +125,7 @@ func makeTextInput(placeholder string, param ...int) textinput.Model {
 	return inputForm
 }
 
+// Initializing model
 func initialModel() model {
 	pInput := textinput.New()
 	pInput.Placeholder = "Enter master password"

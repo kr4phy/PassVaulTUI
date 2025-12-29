@@ -12,6 +12,7 @@ func dataFilePath() string {
 
 	if err != nil {
 		log.Printf("Warning: Failed to get executable path: %v. Using default path 'data.bin'", err)
+
 		return "data.bin"
 	}
 
@@ -19,6 +20,7 @@ func dataFilePath() string {
 
 	if err != nil {
 		log.Printf("Warning: Failed to evaluate symlinks for %s: %v. Using default path 'data.bin'", exePath, err)
+
 		return "data.bin"
 	}
 
@@ -29,6 +31,7 @@ func dataFilePath() string {
 
 		if cwdErr != nil {
 			log.Printf("Warning: Failed to get working directory: %v. Using default path 'data.bin'", cwdErr)
+
 			return "data.bin"
 		}
 
