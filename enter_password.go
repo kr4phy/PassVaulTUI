@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -17,14 +19,22 @@ func UpdateEnterPassword(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			m.masterPass = m.passwordInput.Value()
-			_, err := LoadEncryptedData("data.bin", deriveKey(m.masterPass))
+			_, err := LoadEncryptedData(dataFilePath(), deriveKey(m.masterPass))
 			if err != nil {
-				m.err = err
-				m.passwordInput.SetValue("")
-				return m, nil
+				switch {
+				case errors.Is(err, os.ErrNotExist):
+					m.err = nil
+					m.currentState = statePasswordsList
+					return m, nil
+				default:
+					m.err = err
+					m.passwordInput.SetValue("")
+					return m, nil
+				}
 			}
 			m.err = nil
 			m.currentState = statePasswordsList
+			return m, nil
 		}
 
 	// We handle errors just like any other message

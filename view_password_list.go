@@ -22,14 +22,14 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	// Load data once when entering the list state.
 	if m.passStorage == nil {
 		if m.storeExists {
-			content, err := LoadEncryptedData("data.bin", deriveKey(m.masterPass))
+			content, err := LoadEncryptedData(dataFilePath(), deriveKey(m.masterPass))
 			if err != nil {
 				m.err = err
 				return m, tea.Quit
 			}
 			m.passStorage = content
 		} else {
-			if err := SaveToFile("data.bin", [][3]string{}, deriveKey(m.masterPass)); err != nil {
+			if err := SaveToFile(dataFilePath(), [][3]string{}, deriveKey(m.masterPass)); err != nil {
 				m.err = err
 				return m, tea.Quit
 			}
@@ -75,7 +75,7 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			idx := m.passList.Index()
 			if idx >= 0 && idx < len(m.passStorage) {
 				m.passStorage = append(m.passStorage[:idx], m.passStorage[idx+1:]...)
-				if err := SaveToFile("data.bin", m.passStorage, deriveKey(m.masterPass)); err != nil {
+				if err := SaveToFile(dataFilePath(), m.passStorage, deriveKey(m.masterPass)); err != nil {
 					m.err = err
 					return m, tea.Quit
 				}

@@ -54,7 +54,7 @@ func UpdateEditEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			} else {
 				m.passStorage = append(m.passStorage, newEntry)
 			}
-			if err := SaveToFile("data.bin", m.passStorage, deriveKey(m.masterPass)); err != nil {
+			if err := SaveToFile(dataFilePath(), m.passStorage, deriveKey(m.masterPass)); err != nil {
 				m.err = err
 				return m, tea.Quit
 			}

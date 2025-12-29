@@ -23,7 +23,7 @@ func UpdateChangeMasterPass(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			newPass := m.changePassInput.Value()
 			if m.passStorage == nil {
 				if m.storeExists {
-					content, err := LoadEncryptedData("data.bin", deriveKey(m.masterPass))
+					content, err := LoadEncryptedData(dataFilePath(), deriveKey(m.masterPass))
 					if err != nil {
 						m.err = err
 						return m, nil
@@ -33,7 +33,7 @@ func UpdateChangeMasterPass(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 					m.passStorage = make([][3]string, 0)
 				}
 			}
-			if err := SaveToFile("data.bin", m.passStorage, deriveKey(newPass)); err != nil {
+			if err := SaveToFile(dataFilePath(), m.passStorage, deriveKey(newPass)); err != nil {
 				m.err = err
 				return m, nil
 			}

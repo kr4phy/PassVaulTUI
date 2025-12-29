@@ -105,7 +105,7 @@ func initialModel() model {
 		}
 	}
 	var storeExists bool
-	if _, err := os.Stat("data.bin"); err != nil {
+	if _, err := os.Stat(dataFilePath()); err != nil {
 		storeExists = false
 	} else {
 		storeExists = true

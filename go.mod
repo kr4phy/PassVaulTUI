@@ -1,4 +1,4 @@
-module PassVaulTUI
+module github.com/kr4phy/PassVaulTUI
 
 go 1.25.4
 
