@@ -83,9 +83,11 @@ func UpdateEditEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 			return m, nil
 		case "shift+tab", "up":
-			setEditFocus(&m, m.editFocus-1)
+			if m.editFocus > 0 {
+				setEditFocus(&m, m.editFocus-1)
 
-			return m, nil
+				return m, nil
+			}
 		}
 	}
 
