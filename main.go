@@ -6,7 +6,6 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -38,14 +37,6 @@ var (
 	subtleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	textStyle    = lipgloss.NewStyle()
 )
-
-type tickMsg struct{}
-
-func tick() tea.Cmd {
-	return tea.Tick(time.Second, func(time.Time) tea.Msg {
-		return tickMsg{}
-	})
-}
 
 func main() {
 	p := tea.NewProgram(initialModel())
@@ -81,7 +72,6 @@ type model struct {
 	genFocus         int
 	generatedPass    string
 	chosenCredential list.Item
-	Ticks            int
 	err              error
 }
 
@@ -158,18 +148,13 @@ func initialModel() model {
 		genFocus:         0,
 		generatedPass:    "",
 		chosenCredential: item{},
-		Ticks:            0,
 		err:              nil,
 	}
 }
 
-func (m model) Init() tea.Cmd { return tea.Batch(textinput.Blink, tick()) }
+func (m model) Init() tea.Cmd { return textinput.Blink }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	//var cmd tea.Cmd
-	if m.Ticks == 5 {
-		m.Ticks = 0
-	}
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h, v := passListStyle.GetFrameSize()
@@ -180,10 +165,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
-
-	case tickMsg:
-		m.Ticks++
-		return m, tick()
 	}
 	switch m.currentState {
 	case stateEnterPassword:
