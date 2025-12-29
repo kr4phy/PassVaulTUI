@@ -16,8 +16,6 @@ func UpdatePasswordDetail(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "esc", "enter":
 			m.currentState = statePasswordsList
 		}
-
-	// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
 

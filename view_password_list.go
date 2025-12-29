@@ -22,7 +22,6 @@ func (i item) Description() string { return i.id }
 func (i item) FilterValue() string { return i.title }
 
 func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
-	// Load data once when entering the list state.
 	if m.passStorage == nil {
 		content, err := LoadEncryptedData(dataFilePath(), deriveKey(m.masterPass))
 		if err != nil {

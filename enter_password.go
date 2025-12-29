@@ -24,7 +24,6 @@ func UpdateEnterPassword(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			if err != nil {
 				switch {
 				case errors.Is(err, os.ErrNotExist):
-					// Defer creation to UpdatePasswordList for consistency.
 					m.storeExists = false
 					m.err = nil
 					m.currentState = statePasswordsList

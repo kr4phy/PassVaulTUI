@@ -18,7 +18,6 @@ const (
 	specialLetters = "!@#$%^&*()-_=+[]{}\\|;:,<.>/?"
 )
 
-// setGeneratorFocus updates which generator control is focused.
 func setGeneratorFocus(m *model, idx int) {
 	if idx < 0 {
 		idx = 0

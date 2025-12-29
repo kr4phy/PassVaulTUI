@@ -46,13 +46,13 @@ var viewDispatch = map[state]viewHandler{
 
 var (
 	windowStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62")).
-			Padding(0, 1) // 좌우 여백
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1)
 	formWindowStyle = lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("62")).
-			Padding(0, 1)
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1)
 	titleStyle   = lipgloss.NewStyle().Bold(true).AlignHorizontal(lipgloss.Center)
 	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
 	subtleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))

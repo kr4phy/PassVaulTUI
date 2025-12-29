@@ -7,9 +7,6 @@ import (
 	"strings"
 )
 
-// dataFilePath returns the data file path located beside the running binary.
-// When running via `go run`, the binary lives in a temporary directory, so we
-// instead use the current working directory to keep the file with the sources.
 func dataFilePath() string {
 	exePath, err := os.Executable()
 
