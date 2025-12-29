@@ -1,6 +1,9 @@
 package main
 
 import (
+	"errors"
+	"os"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -21,20 +24,23 @@ func (i item) FilterValue() string { return i.title }
 func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	// Load data once when entering the list state.
 	if m.passStorage == nil {
-		if m.storeExists {
-			content, err := LoadEncryptedData(dataFilePath(), deriveKey(m.masterPass))
-			if err != nil {
+		content, err := LoadEncryptedData(dataFilePath(), deriveKey(m.masterPass))
+		if err != nil {
+			switch {
+			case errors.Is(err, os.ErrNotExist):
+				if saveErr := SaveToFile(dataFilePath(), [][3]string{}, deriveKey(m.masterPass)); saveErr != nil {
+					m.err = saveErr
+					return m, tea.Quit
+				}
+				m.storeExists = true
+				m.passStorage = make([][3]string, 0)
+			default:
 				m.err = err
 				return m, tea.Quit
 			}
-			m.passStorage = content
 		} else {
-			if err := SaveToFile(dataFilePath(), [][3]string{}, deriveKey(m.masterPass)); err != nil {
-				m.err = err
-				return m, tea.Quit
-			}
 			m.storeExists = true
-			m.passStorage = make([][3]string, 0)
+			m.passStorage = content
 		}
 		m.passList.SetItems(ConvertSliceToListItem(m.passStorage))
 	}
