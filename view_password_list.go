@@ -57,24 +57,24 @@ func UpdatePasswordList(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "n":
-			setAddFocus(&m, 0)
-			m.addTitleInput.SetValue("")
-			m.addIDInput.SetValue("")
-			m.addPassInput.SetValue("")
+			setEditFocus(&m, 0)
+			m.editTitleInput.SetValue("")
+			m.editIDInput.SetValue("")
+			m.editPassInput.SetValue("")
 			m.isEditing = false
 			m.editIndex = -1
-			m.currentState = stateAddEntry
+			m.currentState = stateEditEntry
 			return m, nil
 		case "e":
 			idx := m.passList.Index()
 			if idx >= 0 && idx < len(m.passStorage) {
-				setAddFocus(&m, 0)
-				m.addTitleInput.SetValue(m.passStorage[idx][0])
-				m.addIDInput.SetValue(m.passStorage[idx][1])
-				m.addPassInput.SetValue(m.passStorage[idx][2])
+				setEditFocus(&m, 0)
+				m.editTitleInput.SetValue(m.passStorage[idx][0])
+				m.editIDInput.SetValue(m.passStorage[idx][1])
+				m.editPassInput.SetValue(m.passStorage[idx][2])
 				m.isEditing = true
 				m.editIndex = idx
-				m.currentState = stateAddEntry
+				m.currentState = stateEditEntry
 				return m, nil
 			}
 		case "d", "backspace", "delete":

@@ -7,25 +7,26 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// setAddFocus updates which add-entry field is focused.
-func setAddFocus(m *model, idx int) {
+func setEditFocus(m *model, idx int) {
 	if idx < 0 {
 		idx = 0
 	}
+
 	if idx > 2 {
 		idx = 2
 	}
-	m.addFocus = idx
-	m.addTitleInput.Blur()
-	m.addIDInput.Blur()
-	m.addPassInput.Blur()
+
+	m.editFocus = idx
+	m.editTitleInput.Blur()
+	m.editIDInput.Blur()
+	m.editPassInput.Blur()
 	switch idx {
 	case 0:
-		m.addTitleInput.Focus()
+		m.editTitleInput.Focus()
 	case 1:
-		m.addIDInput.Focus()
+		m.editIDInput.Focus()
 	case 2:
-		m.addPassInput.Focus()
+		m.editPassInput.Focus()
 	}
 }
 
@@ -36,46 +37,54 @@ func UpdateEditEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "esc":
-			// Return to list without saving
 			m.isEditing = false
 			m.editIndex = -1
 			m.currentState = statePasswordsList
-			setAddFocus(&m, 0)
+			setEditFocus(&m, 0)
+
 			return m, nil
 		case "enter":
-			if m.addFocus < 2 {
-				setAddFocus(&m, m.addFocus+1)
+			if m.editFocus < 2 {
+				setEditFocus(&m, m.editFocus+1)
+
 				return m, nil
 			}
-			// addFocus == 2 and enter -> save
-			newEntry := [3]string{m.addTitleInput.Value(), m.addIDInput.Value(), m.addPassInput.Value()}
+
+			newEntry := [3]string{m.editTitleInput.Value(), m.editIDInput.Value(), m.editPassInput.Value()}
+
 			if m.isEditing && m.editIndex >= 0 && m.editIndex < len(m.passStorage) {
 				m.passStorage[m.editIndex] = newEntry
 			} else {
 				m.passStorage = append(m.passStorage, newEntry)
 			}
+
 			if err := SaveToFile(dataFilePath(), m.passStorage, deriveKey(m.masterPass)); err != nil {
 				m.err = err
+
 				return m, tea.Quit
+
 			}
 			m.passList.SetItems(ConvertSliceToListItem(m.passStorage))
-			// reset inputs for next time
-			m.addTitleInput.SetValue("")
-			m.addIDInput.SetValue("")
-			m.addPassInput.SetValue("")
+			m.editTitleInput.SetValue("")
+			m.editIDInput.SetValue("")
+			m.editPassInput.SetValue("")
 			m.isEditing = false
 			m.editIndex = -1
-			setAddFocus(&m, 0)
+			setEditFocus(&m, 0)
 			m.currentState = statePasswordsList
+
 			return m, nil
 		case "tab", "down":
-			if m.addFocus < 2 {
-				setAddFocus(&m, m.addFocus+1)
+			if m.editFocus < 2 {
+				setEditFocus(&m, m.editFocus+1)
+
 				return m, nil
 			}
+
 			return m, nil
 		case "shift+tab", "up":
-			setAddFocus(&m, m.addFocus-1)
+			setEditFocus(&m, m.editFocus-1)
+
 			return m, nil
 		}
 	}
@@ -83,11 +92,11 @@ func UpdateEditEntry(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
-	m.addTitleInput, cmd = m.addTitleInput.Update(msg)
+	m.editTitleInput, cmd = m.editTitleInput.Update(msg)
 	cmds = append(cmds, cmd)
-	m.addIDInput, cmd = m.addIDInput.Update(msg)
+	m.editIDInput, cmd = m.editIDInput.Update(msg)
 	cmds = append(cmds, cmd)
-	m.addPassInput, cmd = m.addPassInput.Update(msg)
+	m.editPassInput, cmd = m.editPassInput.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -99,25 +108,31 @@ func EditEntryView(m model) string {
 		addIDInput    string
 		addPassInput  string
 	)
-	if m.addTitleInput.Focused() {
-		addTitleInput = keywordStyle.Render(m.addTitleInput.View())
+
+	if m.editTitleInput.Focused() {
+		addTitleInput = keywordStyle.Render(m.editTitleInput.View())
 	} else {
-		addTitleInput = m.addTitleInput.View()
+		addTitleInput = m.editTitleInput.View()
 	}
-	if m.addIDInput.Focused() {
-		addIDInput = keywordStyle.Render(m.addIDInput.View())
+
+	if m.editIDInput.Focused() {
+		addIDInput = keywordStyle.Render(m.editIDInput.View())
 	} else {
-		addIDInput = m.addIDInput.View()
+		addIDInput = m.editIDInput.View()
 	}
-	if m.addPassInput.Focused() {
-		addPassInput = keywordStyle.Render(m.addPassInput.View())
+
+	if m.editPassInput.Focused() {
+		addPassInput = keywordStyle.Render(m.editPassInput.View())
 	} else {
-		addPassInput = m.addPassInput.View()
+		addPassInput = m.editPassInput.View()
 	}
+
 	label := "Add new entry"
+
 	if m.isEditing {
 		label = "Edit entry"
 	}
+
 	content := fmt.Sprintf(
 		"%s\n\nTitle %s\nID %s\nPassword %s\n\n(tab/down/enter to next, shift+tab/up back, enter to save, esc to cancel)",
 		titleStyle.
@@ -128,6 +143,7 @@ func EditEntryView(m model) string {
 		addPassInput,
 	)
 	h, v := windowStyle.GetFrameSize()
+
 	return lipgloss.Place(
 		m.vpWidth-h,
 		m.vpHeight-v,

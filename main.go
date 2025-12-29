@@ -1,9 +1,7 @@
 package main
 
-// A simple program demonstrating the text input component from the Bubbles
-// component library.
-
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -14,14 +12,37 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type state int
+
 const (
-	stateEnterPassword     = 0
-	statePasswordsList     = 1
-	statePasswordDetail    = 2
-	stateAddEntry          = 3
-	stateChangeMaster      = 4
-	statePasswordGenerator = 5
+	stateEnterPassword state = iota
+	statePasswordsList
+	statePasswordDetail
+	stateEditEntry
+	stateChangeMaster
+	statePasswordGenerator
 )
+
+type updateHandler func(tea.Msg, model) (tea.Model, tea.Cmd)
+type viewHandler func(model) string
+
+var updateDispatch = map[state]updateHandler{
+	stateEnterPassword:     UpdateEnterPassword,
+	statePasswordsList:     UpdatePasswordList,
+	statePasswordDetail:    UpdatePasswordDetail,
+	stateEditEntry:         UpdateEditEntry,
+	stateChangeMaster:      UpdateChangeMasterPass,
+	statePasswordGenerator: UpdatePasswordGenerator,
+}
+
+var viewDispatch = map[state]viewHandler{
+	stateEnterPassword:     EnterPasswordView,
+	statePasswordsList:     PasswordListView,
+	statePasswordDetail:    PasswordDetailView,
+	stateEditEntry:         EditEntryView,
+	stateChangeMaster:      ChangeMasterPassView,
+	statePasswordGenerator: PasswordGeneratorView,
+}
 
 var (
 	windowStyle = lipgloss.NewStyle().
@@ -40,6 +61,7 @@ var (
 
 func main() {
 	p := tea.NewProgram(initialModel())
+
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -52,7 +74,7 @@ type (
 type model struct {
 	vpWidth          int
 	vpHeight         int
-	currentState     int
+	currentState     state
 	storeExists      bool
 	passwordInput    textinput.Model
 	masterPass       string
@@ -60,10 +82,10 @@ type model struct {
 	passList         list.Model
 	isEditing        bool
 	editIndex        int
-	addTitleInput    textinput.Model
-	addIDInput       textinput.Model
-	addPassInput     textinput.Model
-	addFocus         int
+	editTitleInput   textinput.Model
+	editIDInput      textinput.Model
+	editPassInput    textinput.Model
+	editFocus        int
 	changePassInput  textinput.Model
 	genLengthInput   textinput.Model
 	genUseUpper      bool
@@ -73,6 +95,27 @@ type model struct {
 	generatedPass    string
 	chosenCredential list.Item
 	err              error
+}
+
+func makeTextInput(placeholder string, param ...int) textinput.Model {
+	inputForm := textinput.New()
+	inputForm.Placeholder = placeholder
+
+	charLimit := 156
+	width := 24
+
+	if len(param) > 0 && param[0] != 0 {
+		charLimit = 156
+	}
+
+	if len(param) > 1 && param[1] != 0 {
+		width = param[1]
+	}
+
+	inputForm.CharLimit = charLimit
+	inputForm.Width = width
+
+	return inputForm
 }
 
 func initialModel() model {
@@ -94,41 +137,35 @@ func initialModel() model {
 			key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "generate password")),
 		}
 	}
+
 	var storeExists bool
+
 	if _, err := os.Stat(dataFilePath()); err != nil {
-		storeExists = false
+		if errors.Is(err, os.ErrNotExist) {
+			storeExists = false
+		} else {
+			log.Println("Uncaught os.Stat() error:", err)
+			storeExists = false
+		}
 	} else {
 		storeExists = true
 	}
-	addTitle := textinput.New()
-	addTitle.Placeholder = "title"
-	addTitle.CharLimit = 156
-	addTitle.Width = 24
-	addID := textinput.New()
-	addID.Placeholder = "id"
-	addID.CharLimit = 156
-	addID.Width = 24
-	addPass := textinput.New()
-	addPass.Placeholder = "password"
-	addPass.CharLimit = 156
-	addPass.Width = 24
-	addPass.EchoMode = textinput.EchoPassword
-	addPass.EchoCharacter = '*'
-	changePass := textinput.New()
-	changePass.Placeholder = "Enter new master password"
-	changePass.CharLimit = 156
-	changePass.Width = 24
+
+	editTitle := makeTextInput("title")
+	editID := makeTextInput("id")
+	editPass := makeTextInput("password")
+	editPass.EchoMode = textinput.EchoPassword
+	editPass.EchoCharacter = '*'
+	changePass := makeTextInput("Enter new master password")
 	changePass.EchoMode = textinput.EchoPassword
 	changePass.EchoCharacter = '*'
-	genLength := textinput.New()
-	genLength.Placeholder = "length"
-	genLength.CharLimit = 4
-	genLength.Width = 6
+	genLength := makeTextInput("length", 4, 6)
 	genLength.SetValue("16")
+
 	return model{
 		vpWidth:          0,
 		vpHeight:         0,
-		currentState:     0,
+		currentState:     stateEnterPassword,
 		storeExists:      storeExists,
 		passwordInput:    pInput,
 		masterPass:       "",
@@ -136,10 +173,10 @@ func initialModel() model {
 		passList:         passList,
 		isEditing:        false,
 		editIndex:        -1,
-		addTitleInput:    addTitle,
-		addIDInput:       addID,
-		addPassInput:     addPass,
-		addFocus:         0,
+		editTitleInput:   editTitle,
+		editIDInput:      editID,
+		editPassInput:    editPass,
+		editFocus:        0,
 		changePassInput:  changePass,
 		genLengthInput:   genLength,
 		genUseUpper:      true,
@@ -166,41 +203,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	}
-	switch m.currentState {
-	case stateEnterPassword:
-		return UpdateEnterPassword(msg, m)
-	case statePasswordsList:
-		return UpdatePasswordList(msg, m)
-	case statePasswordDetail:
-		return UpdatePasswordDetail(msg, m)
-	case stateAddEntry:
-		return UpdateEditEntry(msg, m)
-	case stateChangeMaster:
-		return UpdateChangeMasterPass(msg, m)
-	case statePasswordGenerator:
-		return UpdatePasswordGenerator(msg, m)
-	default:
-		return UpdateEnterPassword(msg, m)
+
+	if h, ok := updateDispatch[m.currentState]; ok {
+		return h(msg, m)
 	}
+
+	return m, nil
 }
 
 func (m model) View() string {
 	var content string
-	switch m.currentState {
-	case stateEnterPassword:
-		content = EnterPasswordView(m)
-	case statePasswordsList:
-		content = PasswordListView(m)
-	case statePasswordDetail:
-		content = PasswordDetailView(m)
-	case stateAddEntry:
-		content = EditEntryView(m)
-	case stateChangeMaster:
-		content = ChangeMasterPassView(m)
-	case statePasswordGenerator:
-		content = PasswordGeneratorView(m)
-	default:
-		content = EnterPasswordView(m)
+
+	if h, ok := viewDispatch[m.currentState]; ok {
+		content = h(m)
 	}
+
 	return windowStyle.Render(content)
 }

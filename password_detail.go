@@ -20,6 +20,7 @@ func UpdatePasswordDetail(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
+
 		return m, nil
 	}
 
@@ -28,6 +29,7 @@ func UpdatePasswordDetail(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 func PasswordDetailView(m model) string {
 	var details string
+
 	if cred, ok := m.chosenCredential.(item); ok {
 		details = fmt.Sprintf("Title: %s\nID: %s\nPassword: %s", keywordStyle.Render(cred.title[7:]), keywordStyle.Render(cred.id[4:]), keywordStyle.Render(cred.password))
 	} else {
@@ -42,6 +44,7 @@ func PasswordDetailView(m model) string {
 		formWindowStyle.Render(details),
 	) + "\n"
 	h, v := windowStyle.GetFrameSize()
+
 	return lipgloss.Place(
 		m.vpWidth-h,
 		m.vpHeight-v,
