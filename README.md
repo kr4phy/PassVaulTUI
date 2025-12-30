@@ -47,6 +47,16 @@ When repairing data, `data.bin` must be placed in the binary's directory.
 
 CLI/Headless mode is not supported to avoid exposing the master password.
 
+## Screenshots
+
+| Enter master password                                                        | Password list                                                | Add new entry                                                |
+|------------------------------------------------------------------------------|--------------------------------------------------------------|--------------------------------------------------------------|
+| ![Enter master password](./screenshots/screenshot_enter_master_password.png) | ![Password list](./screenshots/screenshot_password_list.png) | ![Add new entry](./screenshots/screenshot_add_new_entry.png) |
+
+| Edit entry                                             | Password detail                                                  | Password generator                                                     |
+|--------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------|
+| ![Edit entry](./screenshots/screenshot_edit_entry.png) | ![Password detail](./screenshots/screenshot_password_detail.png) | ![Password generator](./screenshots/screenshot_password_generator.png) |
+
 ## License
 This project is licensed under the BSD 3-Clause License. For more details, please see the LICENSE file.
 
